@@ -6,6 +6,7 @@ from datetime import datetime
 # ── AUTH SCHEMAS ──────────────────────────────────────────────
 class UserRegister(BaseModel):
     full_name: str
+    username: str
     email: str
     phone: str
     password: str
@@ -17,7 +18,7 @@ class UserRegister(BaseModel):
 
 
 class UserLogin(BaseModel):
-    email: str
+    username: str
     password: str
 
 
@@ -34,6 +35,7 @@ class TokenData(BaseModel):
 class UserResponse(BaseModel):
     id: int
     full_name: str
+    username: str
     email: str
     phone: str
     blood_type: str

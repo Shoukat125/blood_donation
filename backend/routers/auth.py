@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import Optional
 import os
+import smtplib
+from email.mime.text import MIMEText
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
@@ -57,20 +59,40 @@ def get_current_user(token: str, db: Session):
 # ── ROUTES ────────────────────────────────────────────────────
 @router.post("/register", response_model=schemas.UserResponse)
 def register(user_data: schemas.UserRegister, db: Session = Depends(get_db)):
+    # ✅ FIX: email hamesha lowercase karke save/compare karo, taake
+    # "Test@Gmail.com" aur "test@gmail.com" alag accounts na banein
+    # aur login case-mismatch ki wajah se fail na ho.
+    email_normalized = user_data.email.strip().lower()
+    username_normalized = user_data.username.strip().lower()
+
+    if not username_normalized:
+        raise HTTPException(status_code=400, detail="Username khali nahi ho sakta")
+
     # Check if email already exists
-    existing = db.query(models.User).filter(
-        models.User.email == user_data.email
+    existing_email = db.query(models.User).filter(
+        models.User.email == email_normalized
     ).first()
-    if existing:
+    if existing_email:
         raise HTTPException(
             status_code=400,
             detail="Email already registered"
         )
 
+    # Check if username already exists
+    existing_username = db.query(models.User).filter(
+        models.User.username == username_normalized
+    ).first()
+    if existing_username:
+        raise HTTPException(
+            status_code=400,
+            detail="Yeh username pehle se liya ja chuka hai, koi aur try karein"
+        )
+
     # Create new user
     new_user = models.User(
         full_name=user_data.full_name,
-        email=user_data.email,
+        username=username_normalized,
+        email=email_normalized,
         phone=user_data.phone,
         password_hash=hash_password(user_data.password),
         blood_type=user_data.blood_type,
@@ -87,8 +109,11 @@ def register(user_data: schemas.UserRegister, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=schemas.Token)
 def login(user_data: schemas.UserLogin, db: Session = Depends(get_db)):
+    # Login ab username se hota hai (email se nahi) — lowercase/trim
+    # karke compare karo taake case-mismatch se login fail na ho.
+    username_normalized = user_data.username.strip().lower()
     user = db.query(models.User).filter(
-        models.User.email == user_data.email
+        models.User.username == username_normalized
     ).first()
 
     if not user or not verify_password(user_data.password, user.password_hash):
@@ -133,6 +158,43 @@ _reset_codes = {}
 
 import random
 
+
+def send_reset_email(to_email: str, code: str) -> bool:
+    """
+    Gmail SMTP ke zariye reset code email karta hai.
+    Render Environment mein yeh 2 variables set hone chahiye:
+      SMTP_EMAIL         -> Gmail address jis se bhejna hai
+      SMTP_APP_PASSWORD  -> Gmail "App Password" (normal Gmail password NAHI)
+    Agar yeh set nahi hain, ya bhejte waqt koi error aaye, function False
+    return karta hai aur code sirf Render logs mein print hota hai (backup).
+    """
+    smtp_email = os.getenv("SMTP_EMAIL")
+    smtp_password = os.getenv("SMTP_APP_PASSWORD")
+
+    if not smtp_email or not smtp_password:
+        print("⚠️  SMTP_EMAIL / SMTP_APP_PASSWORD env vars set nahi hain — "
+              "email nahi bheja gaya, code sirf logs mein hai.")
+        return False
+
+    body = (
+        f"Aapka Blood Donation App password reset code hai: {code}\n\n"
+        f"Yeh code 15 minute ke liye valid hai. Agar aapne yeh request nahi ki, "
+        f"is email ko ignore kar dein."
+    )
+    msg = MIMEText(body)
+    msg["Subject"] = "Blood Donation App - Password Reset Code"
+    msg["From"] = smtp_email
+    msg["To"] = to_email
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(smtp_email, smtp_password)
+            server.sendmail(smtp_email, [to_email], msg.as_string())
+        return True
+    except Exception as e:
+        print(f"⚠️  Reset email bhejne mein error: {e}")
+        return False
+
 @router.post("/forgot-password")
 def forgot_password(data: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
     email = data.email.strip().lower()
@@ -159,11 +221,15 @@ def forgot_password(data: schemas.ForgotPasswordRequest, db: Session = Depends(g
         "expires_at": expires_at
     }
 
-    # Console log for local dev testing
+    # Console log for local dev / backup (agar email fail ho jaye to yahan se
+    # bhi code dekh sakte ho — Render Dashboard → Logs)
     print(f"\n==========================================")
     print(f"🔑 PASSWORD RESET CODE FOR {email}: {code}")
     print(f"Valid for 15 minutes until {expires_at}")
     print(f"==========================================\n")
+
+    # Asal email bhejne ki koshish karo
+    send_reset_email(email, code)
 
     return generic_response
 

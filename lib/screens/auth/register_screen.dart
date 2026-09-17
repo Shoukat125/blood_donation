@@ -17,6 +17,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -47,6 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final result = await ApiService.register(
         name: _nameController.text.trim(),
+        username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         bloodType: _selectedBloodType,
@@ -83,6 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
@@ -182,6 +185,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: const InputDecoration(
                     hintText: 'Ahmed Khan',
                     prefixIcon: Icon(Icons.person_outline, color: AppColors.red, size: 20),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Username
+                const Text('Username', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _usernameController,
+                  validator: (v) => Validators.required(v, fieldName: 'Username'),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. ahmed125 (login ke liye use hoga)',
+                    prefixIcon: Icon(Icons.alternate_email, color: AppColors.red, size: 20),
                   ),
                 ),
                 const SizedBox(height: 16),

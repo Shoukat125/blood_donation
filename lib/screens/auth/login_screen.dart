@@ -15,7 +15,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -35,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final result = await ApiService.login(
-        email: _emailController.text.trim(),
+        username: _usernameController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -152,10 +152,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
 
                 // ==================
-                // EMAIL FIELD
+                // USERNAME FIELD
                 // ==================
                 const Text(
-                  'Email',
+                  'Username',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 13,
@@ -164,15 +164,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: Validators.email,
+                  controller: _usernameController,
+                  keyboardType: TextInputType.text,
+                  validator: (v) => Validators.required(v, fieldName: 'Username'),
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                    hintText: 'Enter your email',
+                    hintText: 'Enter your username',
                     prefixIcon:
-                        Icon(Icons.email_outlined, color: AppColors.red, size: 20),
+                        Icon(Icons.person_outline, color: AppColors.red, size: 20),
                   ),
                 ),
 

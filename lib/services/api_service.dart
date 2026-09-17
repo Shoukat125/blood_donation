@@ -91,6 +91,7 @@ class ApiService {
   // Register
   static Future<Map<String, dynamic>> register({
     required String name,
+    required String username,
     required String email,
     required String password,
     required String bloodType,
@@ -103,6 +104,7 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'full_name': name,       // ✅ FIX 1: name → full_name
+          'username': username,
           'email': email,
           'password': password,
           'blood_type': bloodType,
@@ -118,7 +120,7 @@ class ApiService {
 
   // Login
   static Future<Map<String, dynamic>> login({
-    required String email,
+    required String username,
     required String password,
   }) async {
     try {
@@ -126,7 +128,7 @@ class ApiService {
         Uri.parse('$baseUrl/api/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email': email,
+          'username': username,
           'password': password,
         }),
       );
