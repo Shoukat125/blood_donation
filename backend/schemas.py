@@ -163,6 +163,15 @@ class MessageResponse(BaseModel):
         from_attributes = True
 
 
+class ConversationResponse(BaseModel):
+    other_user_id: int
+    other_user_name: str
+    other_user_phone: Optional[str] = None
+    last_message: str
+    last_message_at: datetime
+    unread_count: int
+
+
 # ── HOSPITAL SCHEMAS ──────────────────────────────────────────
 class HospitalResponse(BaseModel):
     id: int

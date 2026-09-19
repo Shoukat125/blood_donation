@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../services/api_service.dart';
 import '../../routes.dart';
+import '../messages/chat_screen.dart';
 
 class DonorProfileScreen extends StatefulWidget {
   final int donorId;
@@ -295,7 +296,12 @@ class _DonorProfileScreenState extends State<DonorProfileScreen> {
       child: Row(children: [
         Expanded(
           child: GestureDetector(
-            onTap: () => _showMessageDialog(context),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChatScreen(otherUserId: widget.donorId, otherUserName: _name),
+              ),
+            ),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 13),
               decoration: BoxDecoration(
@@ -329,58 +335,4 @@ class _DonorProfileScreenState extends State<DonorProfileScreen> {
     );
   }
 
-  void _showMessageDialog(BuildContext context) {
-    final controller = TextEditingController();
-    bool isSending = false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: AppColors.card,
-          title: Text('Message $_name',
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 16)),
-          content: TextField(
-            controller: controller,
-            style: const TextStyle(color: AppColors.textPrimary),
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: 'Type your message...',
-              hintStyle: TextStyle(color: AppColors.textMuted),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
-            ),
-            TextButton(
-              onPressed: isSending
-                  ? null
-                  : () async {
-                      if (controller.text.trim().isEmpty) return;
-                      setDialogState(() => isSending = true);
-                      final donorId = _donor['id'] is int ? _donor['id'] as int : 0;
-                      final result = await ApiService.sendMessage(
-                        receiverId: donorId,
-                        message: controller.text.trim(),
-                      );
-                      if (!ctx.mounted) return;
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(result['error'] != null
-                              ? 'Message failed: ${result['error']}'
-                              : 'Message sent!'),
-                        ),
-                      );
-                    },
-              child: Text(isSending ? 'Sending...' : 'Send',
-                  style: const TextStyle(color: AppColors.red, fontWeight: FontWeight.w700)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

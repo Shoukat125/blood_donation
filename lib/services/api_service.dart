@@ -453,18 +453,42 @@ class ApiService {
     }
   }
 
-  // Get Messages
-  static Future<List<dynamic>> getMessages() async {
+  // Get Messages with one specific person (chat thread)
+  // ✅ FIX: pehle yeh koi param leta hi nahi tha, jabke backend "other_user_id"
+  // ke bina 422 error deta hai. Isi wajah se yeh function kabhi call hi nahi
+  // ho pa raha tha kisi screen se.
+  static Future<List<dynamic>> getMessages(int otherUserId) async {
     try {
       final token = await getToken();
       final response = await http.get(
-        Uri.parse('$baseUrl/api/messages/'),
+        Uri.parse('$baseUrl/api/messages/?other_user_id=$otherUserId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
       );
-      return await _decode(response);
+      final result = await _decode(response);
+      return result is List ? result : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ✅ NEW: Inbox — saari conversations ki list (har doosre user ke saath
+  // aakhri message aur unread count ke saath), taake "Message" feature
+  // se bheje gaye messages kahin dikh bhi sakein.
+  static Future<List<dynamic>> getConversations() async {
+    try {
+      final token = await getToken();
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/messages/conversations'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      final result = await _decode(response);
+      return result is List ? result : [];
     } catch (e) {
       return [];
     }

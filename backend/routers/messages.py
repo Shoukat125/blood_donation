@@ -41,6 +41,41 @@ def send_message(
     return message
 
 
+# ── GET MY CONVERSATIONS (Inbox list) ──────────────────────────
+# NOTE: yeh route "/{other_user_id}" jaisi kisi route se pehle honi chahiye
+# (yahan koi conflict nahi hai kyunke get_messages query param leta hai),
+# lekin phir bhi isko upar rakha hai taake future mein path-param route
+# add ho to yeh accidentally shadow na ho.
+@router.get("/conversations", response_model=List[schemas.ConversationResponse])
+def get_conversations(
+    current_user: models.User = Depends(get_user_from_header),
+    db: Session = Depends(get_db)
+):
+    msgs = db.query(models.Message).filter(
+        (models.Message.sender_id == current_user.id) |
+        (models.Message.receiver_id == current_user.id)
+    ).order_by(models.Message.created_at.desc()).all()
+
+    conversations = {}
+    for m in msgs:
+        other_id = m.receiver_id if m.sender_id == current_user.id else m.sender_id
+        if other_id not in conversations:
+            other_user = db.query(models.User).filter(models.User.id == other_id).first()
+            unread = sum(
+                1 for x in msgs
+                if x.sender_id == other_id and x.receiver_id == current_user.id and not x.is_read
+            )
+            conversations[other_id] = schemas.ConversationResponse(
+                other_user_id=other_id,
+                other_user_name=other_user.full_name if other_user else "Unknown",
+                other_user_phone=other_user.phone if other_user else None,
+                last_message=m.content,
+                last_message_at=m.created_at,
+                unread_count=unread,
+            )
+    return list(conversations.values())
+
+
 # ── GET MY MESSAGES ───────────────────────────────────────────
 @router.get("/", response_model=List[schemas.MessageResponse])
 def get_messages(

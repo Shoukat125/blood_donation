@@ -1,26 +1,8 @@
-=== Backend Run Karne Ki Command (PostgreSQL wale blood_db ke sath) ===
+flutter clean
+flutter pub get
+flutter run --dart-define=API_BASE_URL=https://blood-donation-oyin.onrender.com
 
-1) Pehli dafa setup (sirf ek baar):
-   cd backend
-   python -m venv venv
-   venv\Scripts\activate          (Windows)  ya  source venv/bin/activate   (Mac/Linux)
-   pip install -r ../requirements.txt
 
-2) Confirm karein ke PostgreSQL service chal rahi hai aur blood_db database
-   pgAdmin mein maujood hai (aap already bana chuke hain).
 
-3) backend/.env file mein DATABASE_URL check karein, ye hona chahiye:
-   DATABASE_URL=postgresql://postgres:Admin@123@localhost:5432/blood_db
-
-4) Server start karne ki command (backend folder ke andar se):
-   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-5) Browser mein check karein ke API chal rahi hai:
-   http://localhost:8000/docs
-
-Note: Pehli baar run hote hi SQLAlchemy khud tables bana dega blood_db
-ke andar (models.py mein jo tables define hain) — koi manual SQL
-likhne ki zaroorat nahi.
-
-Flutter app run karne ke liye (backend chalu hone ke baad, alag terminal mein):
-   flutter run --dart-define=API_BASE_URL=http://localhost:8000
+Render Url database se connected APK file banane ki command hai ye 
+flutter build apk --dart-define=API_BASE_URL=https://blood-donation-oyin.onrender.com

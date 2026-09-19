@@ -202,6 +202,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.inbox),
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white38, width: 2),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.mail_outline_rounded, color: Colors.white, size: 18),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
                   Container(
                     width: 38,
                     height: 38,

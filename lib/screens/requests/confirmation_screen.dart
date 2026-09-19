@@ -18,6 +18,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
   late Map<String, dynamic> _data;
   Timer? _pollTimer;
   bool _isPolling = false;
+  bool _isMarkingComplete = false;
 
   @override
   void initState() {
@@ -62,6 +63,34 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     } else {
       setState(() => _data = result);
     }
+  }
+
+  // ✅ NEW: donor ko blood mil jaane ke baad requester yahan se donation ko
+  // "Completed" mark karta hai. Backend is par donor ki profile stats
+  // (Total Donations, Lives Saved, Last Donation) automatic update kar deta hai.
+  Future<void> _markComplete() async {
+    final id = _data['id'];
+    if (id == null || _isMarkingComplete) return;
+    setState(() => _isMarkingComplete = true);
+    final result = await ApiService.updateRequestStatus(
+      requestId: id is int ? id : int.parse(id.toString()),
+      status: 'Completed',
+    );
+    if (!mounted) return;
+    setState(() => _isMarkingComplete = false);
+    if (result['error'] != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Update failed: ${result['error']}')),
+      );
+      return;
+    }
+    setState(() => _data = {..._data, 'status': 'Completed'});
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('🎉 Donation complete mark ho gayi — shukriya!'),
+        backgroundColor: Color(0xFF1A3A1A),
+      ),
+    );
   }
 
   void _showConfirmedSnackbar() {
@@ -429,6 +458,42 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Column(
         children: [
+          if (status == 'Confirmed')
+            GestureDetector(
+              onTap: _isMarkingComplete ? null : _markComplete,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.green,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: _isMarkingComplete
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('✅ Blood Mil Gaya — Donation Complete Karo',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
+              ),
+            ),
+          if (status == 'Completed')
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A3A1A),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.green),
+              ),
+              child: const Text('🎉 Donation Complete — Shukriya!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
+            ),
           if (status == 'Searching')
             Container(
               padding: const EdgeInsets.all(14),

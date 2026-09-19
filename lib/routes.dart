@@ -14,6 +14,7 @@ import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/change_password_screen.dart';
 import 'screens/profile/settings_screen.dart';
 import 'screens/notifications/donor_notifications_screen.dart';
+import 'screens/messages/inbox_screen.dart';
 
 class AppRoutes {
   static const String initial = '/';
@@ -31,6 +32,7 @@ class AppRoutes {
   static const String changePassword = '/change-password';
   static const String settings = '/settings';
   static const String notifications = '/notifications';
+  static const String inbox = '/inbox';
 
   static Map<String, WidgetBuilder> get routes => {
         initial: (ctx) => const AuthGate(),
@@ -46,6 +48,7 @@ class AppRoutes {
         changePassword: (ctx) => const ChangePasswordScreen(),
         settings: (ctx) => const SettingsScreen(),
         notifications: (ctx) => const DonorNotificationsScreen(),
+        inbox: (ctx) => const InboxScreen(),
       };
 
   static Route<dynamic>? onGenerateRoute(RouteSettings routeSettings) {

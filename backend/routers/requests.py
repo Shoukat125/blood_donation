@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 import random
 import string
+from datetime import date
 
 import models
 import schemas
@@ -227,6 +228,27 @@ def update_status(
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
 
+    was_completed_already = req.status == "Completed"
     req.status = body.status
+
+    # ✅ FIX: jab request "Completed" mark ho (donor ne actually blood de diya),
+    # to jis donor ne is request ko accept kiya tha uski profile stats
+    # (total_donations, lives_saved, last_donation) automatic update karo.
+    # was_completed_already guard duplicate/double-counting rokta hai agar
+    # koi status ko dobara "Completed" pe set kare.
+    if body.status == "Completed" and not was_completed_already:
+        accepted = db.query(models.DonorNotification).filter(
+            models.DonorNotification.request_id == req.id,
+            models.DonorNotification.status == "Accepted"
+        ).first()
+        if accepted:
+            donor = db.query(models.User).filter(
+                models.User.id == accepted.donor_id
+            ).first()
+            if donor:
+                donor.total_donations = (donor.total_donations or 0) + 1
+                donor.lives_saved = (donor.lives_saved or 0) + 1
+                donor.last_donation = date.today().isoformat()
+
     db.commit()
     return {"message": "Status updated", "status": body.status}
