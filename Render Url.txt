@@ -1,1 +1,0 @@
-postgresql://blood_db_y420_user:2y7JStOgpNm8pMtRasJaiifIWxVM8vkf@dpg-dal8mnlbedkc73bljts0-a.singapore-postgres.render.com/blood_db_y420
