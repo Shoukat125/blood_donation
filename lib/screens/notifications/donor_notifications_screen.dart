@@ -41,9 +41,10 @@ class _DonorNotificationsScreenState extends State<DonorNotificationsScreen> {
     if (!mounted) return;
     setState(() => _respondingId = null);
 
-    if (result['error'] != null) {
+    final errorMsg = result['detail'] ?? result['error'];
+    if (errorMsg != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${result['error']}')),
+        SnackBar(content: Text('$errorMsg')),
       );
       _load();
       return;

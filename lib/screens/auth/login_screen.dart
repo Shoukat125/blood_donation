@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } else {
         setState(() {
-          _errorMessage = result['detail'] ?? 'Login failed. Please check credentials.';
+          _errorMessage = result['detail'] ?? result['error'] ?? 'Login failed. Please check credentials.';
         });
       }
     } catch (e) {

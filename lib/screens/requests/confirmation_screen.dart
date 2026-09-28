@@ -78,9 +78,10 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     );
     if (!mounted) return;
     setState(() => _isMarkingComplete = false);
-    if (result['error'] != null) {
+    final errorMsg = result['detail'] ?? result['error'];
+    if (errorMsg != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Update failed: ${result['error']}')),
+        SnackBar(content: Text('Update failed: $errorMsg')),
       );
       return;
     }

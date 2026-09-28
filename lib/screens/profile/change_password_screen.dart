@@ -56,8 +56,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     if (!mounted) return;
     setState(() => _isSaving = false);
 
-    if (result['error'] != null) {
-      setState(() => _errorText = result['error'].toString());
+    final errorMsg = result['detail'] ?? result['error'];
+    if (errorMsg != null) {
+      setState(() => _errorText = errorMsg.toString());
       return;
     }
 

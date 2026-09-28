@@ -66,7 +66,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       } else {
         setState(() {
-          _errorMessage = result['detail'] ?? 'Registration failed. Please try again.';
+          _errorMessage = result['detail'] ?? result['error'] ?? 'Registration failed. Please try again.';
         });
       }
     } catch (e) {

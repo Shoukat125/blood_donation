@@ -14,6 +14,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoading = true;
   bool _notifyAllTypes = true;
   bool _isSavingNotify = false;
+  bool _isDeletingAccount = false;
 
   @override
   void initState() {
@@ -79,6 +80,96 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _confirmDeleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.red, size: 24),
+            SizedBox(width: 8),
+            Text('Delete Account?',
+                style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'This action is permanent and cannot be undone.\n\n'
+          'Deleting your account will remove your:\n'
+          '• Profile and personal information\n'
+          '• Blood donation requests\n'
+          '• Sent and received messages\n'
+          '• Donor notifications\n\n'
+          'Are you sure you want to delete your account permanently?',
+          style: TextStyle(
+              color: AppColors.textMuted, fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel',
+                style: TextStyle(color: AppColors.textMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete Permanently',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isDeletingAccount = true);
+
+    final result = await ApiService.deleteMyAccount();
+
+    if (!mounted) return;
+    setState(() => _isDeletingAccount = false);
+
+    if (result['error'] != null) {
+      final errorMsg = result['detail'] ?? result['error'] ?? 'Failed to delete account';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.card,
+          content: Text(errorMsg.toString(),
+              style: const TextStyle(color: AppColors.red)),
+        ),
+      );
+      return;
+    }
+
+    // Success: clear token & navigate to login screen clearing backstack
+    await ApiService.logout();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Account deleted successfully'),
+      ),
+    );
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.login,
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,6 +223,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
                   ),
                 ),
+                const SizedBox(height: 20),
+                _sectionLabel('DANGER ZONE'),
+                const SizedBox(height: 8),
+                _settingsCard(
+                  borderColor: AppColors.red.withValues(alpha: 0.4),
+                  child: ListTile(
+                    leading: const Icon(Icons.delete_forever_outlined, color: AppColors.red),
+                    title: const Text('Delete My Account',
+                        style: TextStyle(color: AppColors.red, fontSize: 13, fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Permanently delete your profile and all associated data',
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                    trailing: _isDeletingAccount
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.red,
+                            ),
+                          )
+                        : const Icon(Icons.chevron_right, color: AppColors.red, size: 18),
+                    onTap: _isDeletingAccount ? null : _confirmDeleteAccount,
+                  ),
+                ),
                 const SizedBox(height: 28),
                 GestureDetector(
                   onTap: _confirmLogout,
@@ -159,12 +274,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted, letterSpacing: 0.8));
   }
 
-  Widget _settingsCard({required Widget child}) {
+  Widget _settingsCard({required Widget child, Color? borderColor}) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: borderColor ?? AppColors.border),
       ),
       child: child,
     );

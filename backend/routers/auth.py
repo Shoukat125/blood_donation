@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from datetime import datetime, timedelta
 from typing import Optional
 import os
@@ -149,6 +150,46 @@ def change_password(
     current_user.password_hash = hash_password(data.new_password)
     db.commit()
     return {"message": "Password updated successfully"}
+
+
+# ── DELETE MY ACCOUNT ─────────────────────────────────────────
+@router.delete("/me")
+def delete_my_account(
+    current_user: models.User = Depends(get_user_from_header),
+    db: Session = Depends(get_db)
+):
+    try:
+        user_id = current_user.id
+
+        # 1. Delete all messages where sender_id == current_user.id OR receiver_id == current_user.id
+        db.query(models.Message).filter(
+            or_(
+                models.Message.sender_id == user_id,
+                models.Message.receiver_id == user_id
+            )
+        ).delete(synchronize_session=False)
+
+        # 2. Delete all donor_notifications where donor_id == current_user.id
+        db.query(models.DonorNotification).filter(
+            models.DonorNotification.donor_id == user_id
+        ).delete(synchronize_session=False)
+
+        # 3. Delete all blood_requests where requester_id == current_user.id
+        db.query(models.BloodRequest).filter(
+            models.BloodRequest.requester_id == user_id
+        ).delete(synchronize_session=False)
+
+        # 4. Delete the user row itself
+        db.delete(current_user)
+
+        db.commit()
+        return {"message": "Account deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete account: {str(e)}"
+        )
 
 
 # ── FORGOT & RESET PASSWORD ───────────────────────────────────

@@ -114,7 +114,7 @@ class ApiService {
       );
       return jsonDecode(response.body);
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -138,7 +138,7 @@ class ApiService {
       }
       return data;
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -154,7 +154,7 @@ class ApiService {
       );
       return jsonDecode(response.body);
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -176,7 +176,7 @@ class ApiService {
       );
       return jsonDecode(response.body);
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -232,7 +232,7 @@ class ApiService {
       );
       return await _decode(response);
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -249,7 +249,7 @@ class ApiService {
       );
       return await _decode(response);
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -287,7 +287,7 @@ class ApiService {
       );
       return await _decode(response);
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -327,7 +327,7 @@ class ApiService {
       );
       return jsonDecode(response.body);
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -365,7 +365,7 @@ class ApiService {
       );
       return jsonDecode(response.body);
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -378,7 +378,7 @@ class ApiService {
       );
       return await _decode(response);
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -421,7 +421,7 @@ class ApiService {
       }
       return decoded;
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -449,39 +449,18 @@ class ApiService {
       );
       return await _decode(response);
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 
-  // Get Messages with one specific person (chat thread)
-  // ✅ FIX: pehle yeh koi param leta hi nahi tha, jabke backend "other_user_id"
-  // ke bina 422 error deta hai. Isi wajah se yeh function kabhi call hi nahi
-  // ho pa raha tha kisi screen se.
-  static Future<List<dynamic>> getMessages(int otherUserId) async {
+  // Get Messages (conversation with one specific user)
+  // ✅ FIX: backend requires `other_user_id` query param — previous version
+  // never sent it, so this call always failed (422 Validation Error).
+  static Future<List<dynamic>> getMessages({required int otherUserId}) async {
     try {
       final token = await getToken();
       final response = await http.get(
         Uri.parse('$baseUrl/api/messages/?other_user_id=$otherUserId'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      final result = await _decode(response);
-      return result is List ? result : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  // ✅ NEW: Inbox — saari conversations ki list (har doosre user ke saath
-  // aakhri message aur unread count ke saath), taake "Message" feature
-  // se bheje gaye messages kahin dikh bhi sakein.
-  static Future<List<dynamic>> getConversations() async {
-    try {
-      final token = await getToken();
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/messages/conversations'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -542,7 +521,35 @@ class ApiService {
       }
       return decoded;
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': 'Network error: ${e.toString()}'};
+    }
+  }
+
+  // ==================
+  // DELETE MY ACCOUNT
+  // ==================
+  static Future<Map<String, dynamic>> deleteMyAccount() async {
+    try {
+      final token = await getToken();
+      final response = await http.delete(
+        Uri.parse('$baseUrl/api/auth/me'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      final decoded = await _decode(response);
+      if (response.statusCode != 200) {
+        if (decoded is Map<String, dynamic>) {
+          return {'error': decoded['detail'] ?? decoded['error'] ?? 'Failed to delete account'};
+        }
+        return {'error': 'Failed to delete account'};
+      }
+      return decoded is Map<String, dynamic>
+          ? decoded
+          : {'message': 'Account deleted successfully'};
+    } catch (e) {
+      return {'error': 'Network error: ${e.toString()}'};
     }
   }
 }

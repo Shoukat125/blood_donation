@@ -5,4 +5,6 @@ flutter run --dart-define=API_BASE_URL=https://blood-donation-oyin.onrender.com
 
 
 Render Url database se connected APK file banane ki command hai ye 
-flutter build apk --dart-define=API_BASE_URL=https://blood-donation-oyin.onrender.com
+flutter build apk --dart-define=API_BASE_URL=https://blood-donation-oyin.onrender.
+
+flutter build apk --release --dart-define=API_BASE_URL=https://blood-donation-oyin.onrender.com

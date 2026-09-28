@@ -344,9 +344,10 @@ class _RequestBloodScreenState extends State<RequestBloodScreen> {
     if (!context.mounted) return;
     setState(() => _isSubmitting = false);
 
-    if (result['error'] != null) {
+    final errorMsg = result['detail'] ?? result['error'];
+    if (errorMsg != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Request failed: ${result['error']}')),
+        SnackBar(content: Text('Request failed: $errorMsg')),
       );
       return;
     }

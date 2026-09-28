@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_colors.dart';
 import '../../services/api_service.dart';
 import '../../routes.dart';
-import '../messages/chat_screen.dart';
 
 class DonorProfileScreen extends StatefulWidget {
   final int donorId;
@@ -40,6 +40,8 @@ class _DonorProfileScreenState extends State<DonorProfileScreen> {
   bool get _isVerified => _donor['is_verified'] == true;
   bool get _isAvailable => _donor['is_available'] == true;
   String? get _lastDonation => _donor['last_donation']?.toString();
+  String get _phone => _donor['phone']?.toString() ?? '';
+  int get _donorId => _donor['id'] is int ? _donor['id'] as int : widget.donorId;
 
   String get _initials {
     final parts = _name.trim().split(' ');
@@ -293,30 +295,63 @@ class _DonorProfileScreenState extends State<DonorProfileScreen> {
   Widget _buildActionButtons(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChatScreen(otherUserId: widget.donorId, otherUserName: _name),
+      child: Column(children: [
+        Row(children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: _phone.isEmpty ? null : () => _callDonor(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                decoration: BoxDecoration(
+                  color: _phone.isEmpty ? AppColors.card.withOpacity(0.5) : AppColors.card,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: _phone.isEmpty ? AppColors.border.withOpacity(0.5) : AppColors.green),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.call,
+                        size: 16,
+                        color: _phone.isEmpty ? AppColors.textMuted : AppColors.green),
+                    const SizedBox(width: 6),
+                    Text('Call',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: _phone.isEmpty ? AppColors.textMuted : AppColors.textPrimary)),
+                  ],
+                ),
               ),
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Text('✉ Message',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
+          const SizedBox(width: 10),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _openChat(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.chat_bubble_outline, size: 16, color: AppColors.textPrimary),
+                    SizedBox(width: 6),
+                    Text('Message',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
           child: GestureDetector(
             onTap: () => Navigator.pushNamed(context, AppRoutes.request),
             child: Container(
@@ -327,7 +362,7 @@ class _DonorProfileScreenState extends State<DonorProfileScreen> {
               ),
               child: const Text('🩸 Request This Donor',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
             ),
           ),
         ),
@@ -335,4 +370,26 @@ class _DonorProfileScreenState extends State<DonorProfileScreen> {
     );
   }
 
+  Future<void> _callDonor(BuildContext context) async {
+    if (_phone.isEmpty) return;
+    final url = Uri.parse('tel:$_phone');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open dialer on this device.')),
+      );
+    }
+  }
+
+  void _openChat(BuildContext context) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.chat,
+      arguments: {
+        'otherUserId': _donorId,
+        'otherUserName': _name,
+      },
+    );
+  }
 }

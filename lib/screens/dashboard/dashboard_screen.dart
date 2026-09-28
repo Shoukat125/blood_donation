@@ -135,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${_greeting()}, $_name 🔥',
+                    Text('$_name 🔥',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -199,22 +199,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, AppRoutes.inbox),
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white38, width: 2),
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.mail_outline_rounded, color: Colors.white, size: 18),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -285,18 +269,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
-  }
-
-  String _greeting() {
-    final hour = DateTime.now().hour;
-    // ✅ FIX: pehle sirf 3 ranges thay (hour < 12 = "Good morning"), isliye
-    // raat 12:00–4:59 AM mein bhi "Good morning" dikhta tha. Ab raat ke
-    // liye alag range hai.
-    if (hour >= 0 && hour < 5) return 'Working late';
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    if (hour < 21) return 'Good evening';
-    return 'Good night';
   }
 
   String _nextEligibleDate() {
