@@ -14,6 +14,14 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
     "postgresql://postgres:Admin%40123@localhost:5432/blood_db"
 )
 
+# SQLAlchemy 2.1+ mein "postgresql://" ka default driver psycopg (v3) ho gaya hai,
+# jab ke is project mein psycopg2-binary install hai. Isliye driver explicitly
+# psycopg2 set karte hain (Render "postgres://" bhi de sakta hai, usay bhi handle karte hain).
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+
 # PostgreSQL ke liye connect_args ki zaroorat nahi (wo sirf SQLite ke
 # liye thi). pool_pre_ping=True lagane se connection auto-recover ho
 # jata hai agar laptop sleep se wapas aaye ya connection drop ho jaye —
